@@ -1,0 +1,42 @@
+MODULE TeamsCompound;
+
+REQUIRE System, Team, Player;
+
+
+FORM teams 'Состав команд'
+    TREE groupTree t = Team, p = Player
+    PROPERTIES DRAW t READONLY 'Команда' = name(t), nameP 'Игроки' = ' '
+
+    PROPERTIES DRAW p READONLY nameT 'Команда' = ' ', 'Игроки' = name(p)
+    FILTERS team(p) == t
+;
+
+playersQuantity 'Количество игроков' (Team t) = GROUP SUM 1 BY team(Player p);
+
+EXTEND FORM teams
+    PROPERTIES (t) playersQuantity
+;
+
+
+
+EXTEND FORM team
+    OBJECTS p = Player
+    PROPERTIES (p) name
+    FILTERS team(p) = t
+;
+
+DESIGN teams{
+    OBJECTS {
+        horizontal = TRUE;
+        BOX(TREE groupTree) { caption = '';
+            PROPERTY (nameT){charWidth = 10;}
+            
+        }
+    }
+        
+}
+
+
+
+
+

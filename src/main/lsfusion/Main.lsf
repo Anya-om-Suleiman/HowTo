@@ -1,0 +1,10 @@
+MODULE Main;
+
+REQUIRE Game, Team, Player, TeamsCompound;
+
+NAVIGATOR {
+    NEW viewPlayers;
+    NEW teams;
+    NEW scoreTable;
+    
+}

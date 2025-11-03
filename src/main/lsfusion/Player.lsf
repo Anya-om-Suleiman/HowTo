@@ -1,0 +1,64 @@
+MODULE Player;
+
+REQUIRE Team;
+
+CLASS Player 'Игрок';
+name 'ФИО' = DATA STRING (Player);
+number 'Номер' = DATA INTEGER (Player)CHARWIDTH 6 NOFLEX;
+team 'Команда' = DATA Team (Player);
+nameTeam 'Команда' (Player p) = name(team(p)) ;
+dateBirth 'Дата рождения' = DATA DATE (Player) CHARWIDTH 12 NOFLEX;
+
+countNumber 'Количество номеров'(INTEGER n, Team t) = GROUP SUM 1 BY number(Player p), team(p);
+
+CONSTRAINT (CHANGED (number(Player p)) OR CHANGED(team(p))) AND countNumber(number(p), team(p)) > 1
+    MESSAGE 'Номер игрока уже существует в данной команде';
+
+
+
+FORM viewPlayers 'Игроки'
+    OBJECTS p = Player
+    PROPERTIES (p) READONLY number, name, dateBirth, nameTeam
+    PROPERTIES (p)  NEWSESSION NEW, EDIT, DELETE
+;
+
+
+FORM editPlayer 'Игрок'
+    OBJECTS p = Player PANEL
+    PROPERTIES(p) number, name, dateBirth, nameTeam
+
+    EDIT Player OBJECT p
+
+;
+
+
+DESIGN viewPlayers{
+    OBJECTS {
+         MOVE BOX (p){
+             PANEL(p);
+             caption = '';
+            PROPERTY (number(p));
+            PROPERTY (dateBirth(p));
+            
+             
+        }
+    }
+    
+}
+
+
+DESIGN editPlayer {
+    OBJECTS{
+        caption = '';
+        BOX (p){
+            caption = 'Инфомация об игроке';
+            MOVE PROPERTY (number(p)){charWidth = 6;};
+            MOVE PROPERTY (name(p));
+            MOVE PROPERTY (dateBirth(p)){charWidth = 12;};
+            MOVE PROPERTY (nameTeam(p));
+
+        }
+
+    }
+
+}

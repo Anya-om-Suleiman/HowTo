@@ -1,0 +1,220 @@
+MODULE Game;
+
+REQUIRE Team, Player;
+
+CLASS Game 'Игра';
+date 'Дата' = DATA DATE (Game) NONULL;
+hostTeam = DATA Team (Game);
+guestTeam = DATA Team (Game);
+hostTeamName 'Хозяева' (Game game) = name(hostTeam(game))NONULL;
+guestTeamName 'Гости' (Game game) = name(guestTeam(game))NONULL;
+
+competitors(Team t, Game g) = IF hostTeam(g) == t THEN guestTeam(g) ELSE hostTeam(g);
+
+goalsScoredPlayerP 'Гол в основное время' = DATA NUMERIC (Player, Team, Game);
+autoGoalPlayerP  'Автогол в основное время' = DATA NUMERIC (Player, Team, Game);
+goalsScoredPlayerPO 'Гол в овертайм' = DATA NUMERIC (Player, Team, Game);
+autoGoalPlayerPO 'Автогол в овертайм' = DATA NUMERIC (Player, Team, Game);
+goalsScoredPlayerPB 'Гол по буллитам' = DATA NUMERIC (Player, Team, Game);
+goalsByPlayer 'Кол-во забитых голов'(Player p, Team team, Game game) = goalsScoredPlayerP (p, team, game) (+) goalsScoredPlayerPO(p, team, game) (+) goalsScoredPlayerPB(p, team, game);
+
+autoGoalPlayerP 'Автогол в основное время' (Team team, Game g) = GROUP SUM autoGoalPlayerP(Player p, competitors(team, g), g);
+autoGoalPlayerPO 'Автогол в овертайм' (Team team, Game g) = GROUP SUM autoGoalPlayerPO(Player p, competitors(team, g), g);
+
+goalsScoredPlayerP 'Гол в основное время' (Team team, Game g) = GROUP SUM goalsScoredPlayerP(Player p, team, g);
+goalsScoredPlayerPO 'Гол в овертайм' (Team team, Game g) = GROUP SUM goalsScoredPlayerPO(Player p, team, g);
+goalsScoredPlayerPB 'Гол по буллитам' (Team team, Game g) = GROUP SUM goalsScoredPlayerPB(Player p, team, g);
+
+goalsByPlayer 'Кол-во забитых голов' (Team team, Game g) = (GROUP SUM goalsByPlayer(Player p, team, g)) (+) autoGoalPlayerP(team, g) (+) autoGoalPlayerPO(team, g);
+
+goalsScoredP 'Основное время'(Team team) = GROUP SUM goalsScoredPlayerP(team, Game game);
+goalsScoredPO 'Овертайм' (Team team) = GROUP SUM goalsScoredPlayerPO(team, Game game);
+goalsScoredPB 'По буллитам' (Team team) = GROUP SUM goalsScoredPlayerPB(team, Game game);
+
+
+hostGoals 'Х голы' (Game game)=  GROUP SUM goalsByPlayer(hostTeam(game), game);
+guestGoals 'Г голы' (Game game) = GROUP SUM goalsByPlayer(guestTeam(game), game);
+
+goalsConceded 'Кол-во пропущенных голов' (Team team, Game g) = goalsByPlayer(competitors(team, g), g);
+
+CONSTRAINT hostTeam(Game team) = guestTeam(team) CHECKED BY hostTeam,
+guestTeam MESSAGE 'Хозяйская и гостевая команды должны быть разными';
+
+CONSTRAINT hostGoals(Game game) = guestGoals(game) MESSAGE 'Игра не может закончиться вничью';
+
+
+CLASS GameResult 'Р/И' {
+    win 'Победа в основное время',
+    winOT 'Победа в овертайм',
+    winSO 'Победа по буллитам'
+}
+
+resultName 'Имя' (GameResult game) = staticCaption(game) IF game IS GameResult IN base;
+
+result (Game g) = CASE
+    WHEN GROUP MAX goalsScoredPlayerPB(Team t, g) THEN GameResult.winSO               
+    WHEN GROUP MAX goalsScoredPlayerPO(Team t, g) THEN GameResult.winOT              
+    ELSE GameResult.win              
+;
+resultName 'Итог' (Game game) = resultName(result(game)) CHARWIDTH 25 NOFLEX;
+
+
+hostGamesPlayed = GROUP SUM 1 BY hostTeam(Game game);
+guestGamesPlayed = GROUP SUM 1 BY guestTeam(Game game);
+gamesPlayed 'Количество игр' (Team team) = hostGamesPlayed(team) (+) guestGamesPlayed(team);
+
+
+winTeam(Game game) = CASE 
+    WHEN hostGoals(game) > OVERRIDE guestGoals(game), 0 THEN hostTeam(game)
+    WHEN guestGoals(game) > OVERRIDE hostGoals(game), 0 THEN guestTeam(game)
+;
+
+looserTeam(Game game) = CASE
+    WHEN hostGoals(game) > OVERRIDE guestGoals(game), 0 THEN guestTeam(game)
+    WHEN guestGoals(game) > OVERRIDE hostGoals(game), 0 THEN hostTeam(game)
+;
+
+winTeamName 'Победитель' (Game game) = name(winTeam(game));
+looserTeamName  'Проигравший' (Game game) = name(looserTeam(game));
+
+
+points 'Очки' (Team t, Game g) = CASE
+    WHEN result(g) == GameResult.win AND winTeam(g) == t THEN 3
+    WHEN result(g) != GameResult.win AND winTeam(g) == t THEN 2
+    WHEN result(g) != GameResult.win AND NOT winTeam(g) == t THEN 1
+;
+
+hostPoints 'Очки хозяев' (Game game) = points(hostTeam(game), game);
+guestPoints 'Очки гостей' (Game game) = points(guestTeam(game), game);
+
+points 'Очки' (Team team) = GROUP SUM points(team, Game game);
+
+
+hostGoalsScored = GROUP SUM hostGoals(Game game) BY hostTeam(game);
+guestGoalsScored = GROUP SUM guestGoals(Game game) BY guestTeam(game);
+
+goalsScored 'Количество забитых голов' (Team team) = OVERRIDE hostGoalsScored(team) (+) guestGoalsScored(team), 0 IF team IS Team;
+
+hostGoalsConceded = GROUP SUM guestGoals(Game game) BY hostTeam(game);
+guestGoalsConceded = GROUP SUM hostGoals(Game game) BY guestTeam(game);
+goalsConceded 'Количество пропущенных голов' (Team team) = OVERRIDE hostGoalsConceded(team) (+) guestGoalsConceded(team), 0 IF team IS Team;
+
+
+place 'Место в общем зачете' (Team team) = PARTITION SUM 1 ORDER DESC( OVERRIDE points(team)), (OVERRIDE goalsScoredP(team),0), (OVERRIDE goalsScoredPO(team),0), (OVERRIDE goalsScoredPB(team),0), 
+    (OVERRIDE goalsScored(team) (-) goalsConceded(team), 0), goalsScored(team), team;
+
+CONSTRAINT hostGoals(Game game) = guestGoals(game) MESSAGE 'Игра не может закончиться вничью';
+
+goalsScoredByPlayer 'Количество забитых голов' (Player p) = GROUP SUM goalsByPlayer(p, Team team, Game game);
+
+FORM scoreTable 'Турнирная таблица'
+    OBJECTS game = Game
+    PROPERTIES(game)  READONLY date ORDER, hostTeamName, hostGoals, guestTeamName, guestGoals, resultName
+    PROPERTIES (game) NEWSESSION NEW, EDIT, DELETE
+    LIST Game OBJECT game
+;
+
+
+EXTEND FORM scoreTable
+    OBJECTS team = Team
+    PROPERTIES(team)  READONLY  name, gamesPlayed, goalsScored, goalsConceded, points, place
+
+;
+
+
+EXTEND FORM scoreTable
+    OBJECTS p = Player
+    PROPERTIES(p) number, name, nameTeam
+    PROPERTIES (p) goalsScoredByPlayer
+    LIST Player OBJECT p
+    
+;
+
+
+FORM editScoreTable 'Игра'
+    OBJECTS game = Game PANEL 
+    PROPERTIES (game) date, hostTeamName, guestTeamName, resultName, hostGoals, guestGoals, hostPoints, guestPoints, winTeamName, looserTeamName
+    
+    TREE groupTree  team = Team, p = Player
+    PROPERTIES DRAW team READONLY 'Команда' = name(team), 'Игроки' = ' '
+    PROPERTIES DRAW p READONLY nameTeam 'Команда' = ' ', 'Игроки' = name(p)
+    PROPERTIES (p, team, game) goalsScoredPlayerP, autoGoalPlayerP,  goalsScoredPlayerPO, autoGoalPlayerPO, goalsScoredPlayerPB, goalsByPlayer
+    PROPERTIES DRAW p READONLY  goalsConceded 'Кол-во пропущенных голов' = ' '
+    PROPERTIES (team, game) goalsScoredPlayerP, autoGoalPlayerP, goalsScoredPlayerPO, autoGoalPlayerPO, goalsScoredPlayerPB, goalsByPlayer,
+    goalsConceded, points
+ 
+
+    FILTERS team(p) == team
+    
+    EDIT Game OBJECT game
+;
+
+
+DESIGN scoreTable{
+    OBJECTS {
+        NEW pane{
+            fill = 1;
+            horizontal = TRUE;
+             MOVE BOX(game){
+            }  
+            MOVE BOX(p){
+                fill = 2;
+                caption = 'Таблица бомбардиров турнира';
+                PROPERTY (number(p)){charWidth = 6;}
+             
+            }
+        }
+        NEW pane1{
+            horizontal = TRUE;
+            fill = 1;
+            MOVE BOX (team){
+              caption = 'Команды';  
+            }
+        }
+    }
+}
+
+
+DESIGN editScoreTable{
+    OBJECTS {
+        NEW pane FIRST {
+            horizontal = TRUE;
+            NEW BOXg{
+                caption = 'Данные об игре';
+                MOVE PROPERTY (date(game));
+                MOVE PROPERTY (resultName(game));
+                MOVE PROPERTY (winTeamName(game));
+                MOVE PROPERTY (looserTeamName(game));
+            }
+            NEW BOXh {
+                caption = 'Хозяева';
+                MOVE PROPERTY (hostTeamName(game));
+                MOVE PROPERTY (hostGoals(game));
+                MOVE PROPERTY (hostPoints(game));
+            }
+            NEW BOXgu{
+                caption = 'Гости';
+                MOVE PROPERTY (guestTeamName(game));
+                MOVE PROPERTY (guestGoals(game));
+                MOVE PROPERTY (guestPoints(game));
+            }
+            NEW pane1{
+                BOX(TREE groupTree) { caption = 'Информация о командах'; }
+                horizontal = TRUE;
+                PROPERTY (nameTeam){charWidth = 12;};
+                PROPERTY (goalsConceded){charWidth = 12;};
+
+            }
+        }
+
+    }
+
+}
+
+    
+
+
+
+
+
+   

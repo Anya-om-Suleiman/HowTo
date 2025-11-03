@@ -1,0 +1,19 @@
+ MODULE Team;
+
+REQUIRE System;
+
+CLASS Team 'Команда';
+name 'Команда' = DATA STRING[30] (Team) IN base CHARWIDTH 12 NOFLEX;
+quantity 'Игроки' = DATA INTEGER (Team);
+
+
+
+FORM team 'Команда'
+    OBJECTS t = Team PANEL
+    PROPERTIES(t) name
+
+    EDIT Team OBJECT t
+;
+
+ 
+
