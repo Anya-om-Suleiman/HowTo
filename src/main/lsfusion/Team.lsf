@@ -8,10 +8,10 @@ quantity 'Игроки' = DATA INTEGER (Team);
 
 
 
-FORM team 'Команда'
-    OBJECTS t = Team PANEL
-    PROPERTIES(t) name
-
+FORM team 'Команды'
+    OBJECTS t = Team
+    PROPERTIES(t) name, NEW, EDIT, DELETE
+    
     EDIT Team OBJECT t
 ;
 

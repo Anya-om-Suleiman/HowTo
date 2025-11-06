@@ -4,6 +4,7 @@ REQUIRE Game, Team, Player, TeamsCompound;
 
 NAVIGATOR {
     NEW viewPlayers;
+    NEW team;
     NEW teams;
     NEW scoreTable;
     

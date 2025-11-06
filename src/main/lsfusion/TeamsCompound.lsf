@@ -25,11 +25,11 @@ EXTEND FORM team
     FILTERS team(p) = t
 ;
 
-DESIGN teams{
+DESIGN teams {
     OBJECTS {
         horizontal = TRUE;
-        BOX(TREE groupTree) { caption = '';
-            PROPERTY (nameT){charWidth = 10;}
+        BOX(TREE groupTree) { caption = ''; };
+            PROPERTY (nameT){ charWidth = 10; }
             
         }
     }

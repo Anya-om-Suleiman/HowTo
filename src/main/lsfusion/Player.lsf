@@ -32,9 +32,9 @@ FORM editPlayer 'Игрок'
 ;
 
 
-DESIGN viewPlayers{
+DESIGN viewPlayers {
     OBJECTS {
-         MOVE BOX (p){
+         MOVE BOX (p) {
              PANEL(p);
              caption = '';
             PROPERTY (number(p));
@@ -48,13 +48,13 @@ DESIGN viewPlayers{
 
 
 DESIGN editPlayer {
-    OBJECTS{
+    OBJECTS {
         caption = '';
-        BOX (p){
+        BOX (p) {
             caption = 'Инфомация об игроке';
-            MOVE PROPERTY (number(p)){charWidth = 6;};
+            MOVE PROPERTY (number(p)){ charWidth = 6; };
             MOVE PROPERTY (name(p));
-            MOVE PROPERTY (dateBirth(p)){charWidth = 12;};
+            MOVE PROPERTY (dateBirth(p)){ charWidth = 12; };
             MOVE PROPERTY (nameTeam(p));
 
         }

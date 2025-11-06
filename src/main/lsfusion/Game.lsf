@@ -143,32 +143,30 @@ FORM editScoreTable 'Игра'
     PROPERTIES (team, game) goalsScoredPlayerP, autoGoalPlayerP, goalsScoredPlayerPO, autoGoalPlayerPO, goalsScoredPlayerPB, goalsByPlayer,
     goalsConceded, points
  
-
+    FILTERS hostTeam(game) == team OR guestTeam(game) == team
     FILTERS team(p) == team
     
     EDIT Game OBJECT game
 ;
 
 
-DESIGN scoreTable{
+DESIGN scoreTable {
     OBJECTS {
-        NEW pane{
+        NEW pane FIRST {
             fill = 1;
             horizontal = TRUE;
-             MOVE BOX(game){
-            }  
-            MOVE BOX(p){
+            MOVE BOX (game);
+            MOVE BOX (p) {
                 fill = 2;
                 caption = 'Таблица бомбардиров турнира';
-                PROPERTY (number(p)){charWidth = 6;}
-             
+                PROPERTY (number(p)) { charWidth = 6; }
             }
         }
-        NEW pane1{
+        NEW pane1 {
             horizontal = TRUE;
             fill = 1;
-            MOVE BOX (team){
-              caption = 'Команды';  
+            MOVE BOX (team) {
+                caption = 'Команды';  
             }
         }
     }
@@ -179,7 +177,7 @@ DESIGN editScoreTable{
     OBJECTS {
         NEW pane FIRST {
             horizontal = TRUE;
-            NEW BOXg{
+            NEW BOXg {
                 caption = 'Данные об игре';
                 MOVE PROPERTY (date(game));
                 MOVE PROPERTY (resultName(game));
@@ -192,17 +190,17 @@ DESIGN editScoreTable{
                 MOVE PROPERTY (hostGoals(game));
                 MOVE PROPERTY (hostPoints(game));
             }
-            NEW BOXgu{
+            NEW BOXgu {
                 caption = 'Гости';
                 MOVE PROPERTY (guestTeamName(game));
                 MOVE PROPERTY (guestGoals(game));
                 MOVE PROPERTY (guestPoints(game));
             }
-            NEW pane1{
+            NEW pane1 {
                 BOX(TREE groupTree) { caption = 'Информация о командах'; }
                 horizontal = TRUE;
-                PROPERTY (nameTeam){charWidth = 12;};
-                PROPERTY (goalsConceded){charWidth = 12;};
+                PROPERTY (nameTeam){ charWidth = 12; };
+                PROPERTY (goalsConceded){ charWidth = 12; };
 
             }
         }
