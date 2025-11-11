@@ -19,7 +19,7 @@ CONSTRAINT (CHANGED (number(Player p)) OR CHANGED(team(p))) AND countNumber(numb
 FORM viewPlayers 'Игроки'
     OBJECTS p = Player
     PROPERTIES (p) READONLY number, name, dateBirth, nameTeam
-    PROPERTIES (p)  NEWSESSION NEW, EDIT, DELETE
+    PROPERTIES (p)  NEWSESSION NEW, EDIT, DELETE GRID
 ;
 
 
@@ -39,8 +39,6 @@ DESIGN viewPlayers {
              caption = '';
             PROPERTY (number(p));
             PROPERTY (dateBirth(p));
-            
-             
         }
     }
     

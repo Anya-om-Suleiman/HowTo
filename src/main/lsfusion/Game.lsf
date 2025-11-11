@@ -156,18 +156,16 @@ DESIGN scoreTable {
             fill = 1;
             horizontal = TRUE;
             MOVE BOX (game);
-            MOVE BOX (p) {
-                fill = 2;
-                caption = 'Таблица бомбардиров турнира';
-                PROPERTY (number(p)) { charWidth = 6; }
-            }
+            MOVE BOX (p) { fill = 3; }
+            caption = 'Таблица бомбардиров турнира';
+            PROPERTY (number(p)) { charWidth = 6; }
         }
-        NEW pane1 {
-            horizontal = TRUE;
-            fill = 1;
-            MOVE BOX (team) {
-                caption = 'Команды';  
-            }
+    }
+    NEW pane1 {
+        horizontal = TRUE;
+        fill = 1;
+        MOVE BOX (team) {
+            caption = 'Команды';
         }
     }
 }
