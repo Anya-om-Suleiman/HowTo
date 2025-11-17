@@ -1,13 +1,13 @@
 MODULE Game;
 
-REQUIRE Team, Player;
+REQUIRE Team, Player, System;
 
 CLASS Game 'Игра';
 date 'Дата' = DATA DATE (Game) NONULL;
 hostTeam = DATA Team (Game);
 guestTeam = DATA Team (Game);
-hostTeamName 'Хозяева' (Game game) = name(hostTeam(game))NONULL;
-guestTeamName 'Гости' (Game game) = name(guestTeam(game))NONULL;
+hostTeamName 'Хозяева' (Game game) = name(hostTeam(game)) NONULL;
+guestTeamName 'Гости' (Game game) = name(guestTeam(game)) NONULL;
 
 competitors(Team t, Game g) = IF hostTeam(g) == t THEN guestTeam(g) ELSE hostTeam(g);
 
@@ -31,7 +31,6 @@ goalsScoredP 'Основное время'(Team team) = GROUP SUM goalsScoredPla
 goalsScoredPO 'Овертайм' (Team team) = GROUP SUM goalsScoredPlayerPO(team, Game game);
 goalsScoredPB 'По буллитам' (Team team) = GROUP SUM goalsScoredPlayerPB(team, Game game);
 
-
 hostGoals 'Х голы' (Game game)=  GROUP SUM goalsByPlayer(hostTeam(game), game);
 guestGoals 'Г голы' (Game game) = GROUP SUM goalsByPlayer(guestTeam(game), game);
 
@@ -41,7 +40,6 @@ CONSTRAINT hostTeam(Game team) = guestTeam(team) CHECKED BY hostTeam,
 guestTeam MESSAGE 'Хозяйская и гостевая команды должны быть разными';
 
 CONSTRAINT hostGoals(Game game) = guestGoals(game) MESSAGE 'Игра не может закончиться вничью';
-
 
 CLASS GameResult 'Р/И' {
     win 'Победа в основное время',
@@ -56,8 +54,8 @@ result (Game g) = CASE
     WHEN GROUP MAX goalsScoredPlayerPO(Team t, g) THEN GameResult.winOT              
     ELSE GameResult.win              
 ;
-resultName 'Итог' (Game game) = resultName(result(game)) CHARWIDTH 25 NOFLEX;
 
+resultName 'Итог' (Game game) = resultName(result(game)) CHARWIDTH 25 NOFLEX;
 
 hostGamesPlayed = GROUP SUM 1 BY hostTeam(Game game);
 guestGamesPlayed = GROUP SUM 1 BY guestTeam(Game game);
@@ -77,7 +75,6 @@ looserTeam(Game game) = CASE
 winTeamName 'Победитель' (Game game) = name(winTeam(game));
 looserTeamName  'Проигравший' (Game game) = name(looserTeam(game));
 
-
 points 'Очки' (Team t, Game g) = CASE
     WHEN result(g) == GameResult.win AND winTeam(g) == t THEN 3
     WHEN result(g) != GameResult.win AND winTeam(g) == t THEN 2
@@ -89,7 +86,6 @@ guestPoints 'Очки гостей' (Game game) = points(guestTeam(game), game);
 
 points 'Очки' (Team team) = GROUP SUM points(team, Game game);
 
-
 hostGoalsScored = GROUP SUM hostGoals(Game game) BY hostTeam(game);
 guestGoalsScored = GROUP SUM guestGoals(Game game) BY guestTeam(game);
 
@@ -98,7 +94,6 @@ goalsScored 'Количество забитых голов' (Team team) = OVERR
 hostGoalsConceded = GROUP SUM guestGoals(Game game) BY hostTeam(game);
 guestGoalsConceded = GROUP SUM hostGoals(Game game) BY guestTeam(game);
 goalsConceded 'Количество пропущенных голов' (Team team) = OVERRIDE hostGoalsConceded(team) (+) guestGoalsConceded(team), 0 IF team IS Team;
-
 
 place 'Место в общем зачете' (Team team) = PARTITION SUM 1 ORDER DESC( OVERRIDE points(team)), (OVERRIDE goalsScoredP(team),0), (OVERRIDE goalsScoredPO(team),0), (OVERRIDE goalsScoredPB(team),0), 
     (OVERRIDE goalsScored(team) (-) goalsConceded(team), 0), goalsScored(team), team;
@@ -109,27 +104,23 @@ goalsScoredByPlayer 'Количество забитых голов' (Player p) 
 
 FORM scoreTable 'Турнирная таблица'
     OBJECTS game = Game
-    PROPERTIES(game)  READONLY date ORDER, hostTeamName, hostGoals, guestTeamName, guestGoals, resultName
-    PROPERTIES (game) NEWSESSION NEW, EDIT, DELETE
+    PROPERTIES (game)  READONLY date ORDER, hostTeamName, hostGoals, guestTeamName, guestGoals, resultName
+    PROPERTIES (game) NEWSESSION NEW, EDIT 
+    PROPERTIES (game) delete = DELETE GRID 
+    
     LIST Game OBJECT game
 ;
-
 
 EXTEND FORM scoreTable
     OBJECTS team = Team
     PROPERTIES(team)  READONLY  name, gamesPlayed, goalsScored, goalsConceded, points, place
-
 ;
-
 
 EXTEND FORM scoreTable
     OBJECTS p = Player
-    PROPERTIES(p) number, name, nameTeam
-    PROPERTIES (p) goalsScoredByPlayer
-    LIST Player OBJECT p
-    
+    PROPERTIES(p) number, name, nameTeam, goalsScoredByPlayer
+    ORDERS goalsScoredByPlayer(p) DESC
 ;
-
 
 FORM editScoreTable 'Игра'
     OBJECTS game = Game PANEL 
@@ -143,19 +134,20 @@ FORM editScoreTable 'Игра'
     PROPERTIES (team, game) goalsScoredPlayerP, autoGoalPlayerP, goalsScoredPlayerPO, autoGoalPlayerPO, goalsScoredPlayerPB, goalsByPlayer,
     goalsConceded, points
  
-    FILTERS hostTeam(game) == team OR guestTeam(game) == team
+    FILTERS hostTeam (game) == team OR guestTeam(game) == team
     FILTERS team(p) == team
     
     EDIT Game OBJECT game
 ;
-
 
 DESIGN scoreTable {
     OBJECTS {
         NEW pane FIRST {
             fill = 1;
             horizontal = TRUE;
-            MOVE BOX (game);
+            MOVE BOX (game){
+                PROPERTY (delete) { charWidth = 8; }
+            }
             MOVE BOX (p) { fill = 3; }
             caption = 'Таблица бомбардиров турнира';
             PROPERTY (number(p)) { charWidth = 6; }
@@ -169,7 +161,6 @@ DESIGN scoreTable {
         }
     }
 }
-
 
 DESIGN editScoreTable{
     OBJECTS {
@@ -202,9 +193,7 @@ DESIGN editScoreTable{
 
             }
         }
-
     }
-
 }
 
     

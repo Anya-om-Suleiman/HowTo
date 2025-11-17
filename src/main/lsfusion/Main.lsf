@@ -7,5 +7,4 @@ NAVIGATOR {
     NEW team;
     NEW teams;
     NEW scoreTable;
-    
 }

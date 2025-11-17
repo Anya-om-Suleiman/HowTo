@@ -2,7 +2,6 @@ MODULE TeamsCompound;
 
 REQUIRE System, Team, Player;
 
-
 FORM teams 'Состав команд'
     TREE groupTree t = Team, p = Player
     PROPERTIES DRAW t READONLY 'Команда' = name(t), nameP 'Игроки' = ' '
@@ -16,8 +15,6 @@ playersQuantity 'Количество игроков' (Team t) = GROUP SUM 1 BY 
 EXTEND FORM teams
     PROPERTIES (t) playersQuantity
 ;
-
-
 
 EXTEND FORM team
     OBJECTS p = Player

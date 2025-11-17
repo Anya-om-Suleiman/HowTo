@@ -6,11 +6,9 @@ CLASS Team 'Команда';
 name 'Команда' = DATA STRING[30] (Team) IN base CHARWIDTH 12 NOFLEX;
 quantity 'Игроки' = DATA INTEGER (Team);
 
-
-
 FORM team 'Команды'
     OBJECTS t = Team
-    PROPERTIES(t) name, NEW, EDIT, DELETE
+    PROPERTIES (t) name, NEW, EDIT, DELETE
     
     EDIT Team OBJECT t
 ;
